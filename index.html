@@ -117,7 +117,7 @@ input:focus,select:focus{border-color:var(--blue)}
 .ta-row:last-child{border:none}
 .ta-name{flex:1;font-size:15px;font-weight:500;color:var(--lbl)}
 .ta-btns{display:flex;gap:6px}
-.ta-btn{padding:7px 18px;border-radius:8px;border:1.5px solid var(--bg4);cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;background:var(--bg3);color:rgba(255,255,255,0.35);transition:all .15s}
+.ta-btn{padding:7px 18px;border-radius:8px;border:1.5px solid var(--bg4);cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;background:var(--bg3);color:var(--lbl2);transition:all .15s}
 .ta-btn.on-a{background:rgba(10,132,255,0.2);color:var(--blue);border-color:var(--blue)}
 .ta-btn.on-b{background:rgba(255,69,58,0.18);color:var(--red);border-color:var(--red)}
 .ta-btn.on-c{background:rgba(255,159,10,0.18);color:var(--orange);border-color:var(--orange)}
@@ -135,8 +135,8 @@ input:focus,select:focus{border-color:var(--blue)}
 .hole-card{background:var(--bg2);border-radius:16px;overflow:hidden;margin-bottom:12px;box-shadow:var(--card-shadow)}
 .hc-top{display:flex;align-items:center;padding:10px 14px;border-bottom:0.5px solid var(--sep);gap:10px}
 .h-badge{width:56px;height:56px;background:var(--blue);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
-.h-sm{font-size:9px;font-weight:700;color:rgba(255,255,255,0.65);letter-spacing:0.5px;line-height:1}
-.h-lg{font-size:30px;font-weight:800;color:#fff;line-height:1}
+.h-sm{font-size:9px;font-weight:700;color:var(--lbl2);letter-spacing:0.5px;line-height:1}
+.h-lg{font-size:30px;font-weight:800;color:var(--lbl);line-height:1}
 .h-par{flex:1}
 .h-par-lbl{font-size:12px;color:var(--lbl2);font-weight:600;letter-spacing:1px}
 .h-par-ctrl{display:flex;align-items:center;gap:0;background:var(--bg3);border-radius:24px;overflow:hidden;width:fit-content;margin-top:4px;border:1px solid var(--bg4)}
@@ -148,7 +148,7 @@ input:focus,select:focus{border-color:var(--blue)}
 body.light .pill-turbo{background:#e8e8ed;color:rgba(0,0,0,0.4);border:1.5px solid rgba(0,0,0,0.15)}
 .pill-turbo.on{background:rgba(255,159,10,0.25);color:var(--orange);border:1.5px solid var(--orange);box-shadow:0 0 8px rgba(255,159,10,0.3)}
 body.light .pill-turbo.on{background:rgba(255,149,0,0.18);color:#e08800;border:1.5px solid rgba(255,149,0,0.7);box-shadow:0 0 6px rgba(255,149,0,0.25)}
-.pill-all{background:var(--bg3);color:var(--lbl);border:1.5px solid rgba(255,255,255,0.2);font-weight:700}
+.pill-all{background:var(--bg3);color:var(--lbl);border:1.5px solid var(--bg4);font-weight:700}
 body.light .pill-all{background:#e8e8ed;color:#1c1c1e;border:1.5px solid rgba(0,0,0,0.18)}
 
 /* ── SCORE ROWS ── */
@@ -1711,7 +1711,7 @@ function showHole(h){
         const icons={bite:'🐶',olympic:'🏅',team:'🤝',doubleRe:'🎲',farNear:'🎯'};
         const names={bite:'หมากัด',olympic:'โอลิมปิก',team:'ทีม',doubleRe:'เบิ้ล-รี',farNear:'Far-Near'};
         const on=G[k].on;
-        return`<button id="gt-${h}-${k}" onclick="toggleGameMidPlay('${k}',${h})" style="padding:5px 12px;border-radius:16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${on?'rgba(10,132,255,0.5)':'rgba(255,255,255,0.1)'};background:${on?'rgba(10,132,255,0.15)':'rgba(255,255,255,0.04)'};color:${on?'#4da3ff':'rgba(255,255,255,0.3)'}">
+        return`<button id="gt-${h}-${k}" onclick="toggleGameMidPlay('${k}',${h})" style="padding:5px 12px;border-radius:16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${on?'rgba(10,132,255,0.5)':'var(--bg4)'};background:${on?'rgba(10,132,255,0.15)':'var(--fill)'};color:${on?'var(--blue)':'var(--lbl2)'}">
           ${icons[k]} ${names[k]}${on?'':' (ปิด)'}
         </button>`;
       }).join('')}
@@ -1719,8 +1719,8 @@ function showHole(h){
 
     <!-- sub-pills ทีม (เบิ้ล-รี เท่านั้น) -->
     ${G.team.on&&G.doubleRe.on?`<div id="team-sub-pills-${h}" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 14px;border-bottom:0.5px solid var(--sep)">
-      <button onclick="drSet(${h},2)" style="padding:4px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${G.doubleRe.on&&G.doubleRe.mults[h]===2?'rgba(255,215,0,0.5)':'rgba(255,255,255,0.1)'};background:${G.doubleRe.on&&G.doubleRe.mults[h]===2?'rgba(255,215,0,0.15)':'rgba(255,255,255,0.04)'};color:${G.doubleRe.on&&G.doubleRe.mults[h]===2?'var(--yellow)':'rgba(255,255,255,0.3)'}">เบิ้ล ×2</button>
-      <button onclick="drSet(${h},3)" style="padding:4px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${G.doubleRe.on&&G.doubleRe.mults[h]===3?'rgba(48,209,88,0.5)':'rgba(255,255,255,0.1)'};background:${G.doubleRe.on&&G.doubleRe.mults[h]===3?'rgba(48,209,88,0.15)':'rgba(255,255,255,0.04)'};color:${G.doubleRe.on&&G.doubleRe.mults[h]===3?'var(--green)':'rgba(255,255,255,0.3)'}">รี ×3</button>
+      <button onclick="drSet(${h},2)" style="padding:4px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${G.doubleRe.on&&G.doubleRe.mults[h]===2?'rgba(255,215,0,0.5)':'var(--bg4)'};background:${G.doubleRe.on&&G.doubleRe.mults[h]===2?'rgba(255,215,0,0.15)':'var(--fill)'};color:${G.doubleRe.on&&G.doubleRe.mults[h]===2?'var(--yellow)':'var(--lbl2)'}">เบิ้ล ×2</button>
+      <button onclick="drSet(${h},3)" style="padding:4px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${G.doubleRe.on&&G.doubleRe.mults[h]===3?'rgba(48,209,88,0.5)':'var(--bg4)'};background:${G.doubleRe.on&&G.doubleRe.mults[h]===3?'rgba(48,209,88,0.15)':'var(--fill)'};color:${G.doubleRe.on&&G.doubleRe.mults[h]===3?'var(--green)':'var(--lbl2)'}">รี ×3</button>
     </div>`:''}
 
     <div class="score-rows">${scoreRowsHTML}</div>
@@ -1736,7 +1736,7 @@ function showHole(h){
             <span style="font-size:11px;font-weight:700;color:var(--lbl2);min-width:80px">${gnames[k]}</span>
             ${players.map((pl,p)=>{
               const sk=skipData[h]?.[p]?.has(k);
-              return`<button onclick="toggleSkipGame(${h},${p},'${k}')" style="padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${sk?'rgba(255,69,58,0.5)':'rgba(255,255,255,0.1)'};background:${sk?'rgba(255,69,58,0.12)':'rgba(255,255,255,0.04)'};color:${sk?'var(--red)':'rgba(255,255,255,0.3)'}">
+              return`<button onclick="toggleSkipGame(${h},${p},'${k}')" style="padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${sk?'rgba(255,69,58,0.5)':'var(--bg4)'};background:${sk?'rgba(255,69,58,0.12)':'var(--fill)'};color:${sk?'var(--red)':'var(--lbl2)'}">
                 ${sk?'✕ ':''} ${pl.name}
               </button>`;
             }).join('')}
@@ -2073,16 +2073,17 @@ function goLeaderboard(){
 function lbGetThaiNow(){ return new Date(Date.now() + 7*3600000); }
 
 function lbGetAdjustedDate(offset){
-  const t = lbGetThaiNow();
-  // ตัดรอบ 00:01 น. ไทย = 17:01 UTC
-  // ถ้าเวลาไทยยังไม่ถึง 00:01 (UTC ยังไม่ถึง 17:01) ให้ใช้วันเมื่อวาน
-  const thHour = t.getUTCHours();
-  const thMin  = t.getUTCMinutes();
-  if(thHour < 17 || (thHour === 17 && thMin < 1)){
-    t.setUTCDate(t.getUTCDate() - 1);
+  const now = new Date();
+  // เวลาไทย UTC+7
+  const thTime = new Date(now.getTime() + 7*3600000);
+  const thHour = thTime.getUTCHours();
+  const thMin  = thTime.getUTCMinutes();
+  // cutoff 00:01 น. ไทย — ถ้ายังไม่ถึง 00:01 ให้ใช้วันเมื่อวาน
+  if(thHour === 0 && thMin < 1){
+    thTime.setUTCDate(thTime.getUTCDate() - 1);
   }
-  t.setUTCDate(t.getUTCDate() - offset);
-  return t;
+  thTime.setUTCDate(thTime.getUTCDate() - offset);
+  return thTime;
 }
 
 function lbDateKey(offset){
@@ -3254,8 +3255,8 @@ function updateTotals(){
 
   // Pill filter
   const pillsHTML=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
-    <button id="hmpill-all" onclick="setHoleMatrixPill('all')" style="padding:5px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid rgba(10,132,255,0.6);background:rgba(10,132,255,0.18);color:#4da3ff">📊 รวม</button>
-    ${games.map(k=>`<button id="hmpill-${k}" onclick="setHoleMatrixPill('${k}')" style="padding:5px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.4)">${gameIcons[k]} ${gameNames[k]}</button>`).join('')}
+    <button id="hmpill-all" onclick="setHoleMatrixPill('all')" style="padding:5px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid rgba(10,132,255,0.6);background:rgba(10,132,255,0.18);color:var(--blue)">📊 รวม</button>
+    ${games.map(k=>`<button id="hmpill-${k}" onclick="setHoleMatrixPill('${k}')" style="padding:5px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--bg4);background:var(--fill);color:var(--lbl2)">${gameIcons[k]} ${gameNames[k]}</button>`).join('')}
   </div>`;
 
   el.innerHTML=`${pillsHTML}<div id="hole-matrix-table">${renderHoleTable(perPairAll)}</div>`;
@@ -3291,9 +3292,9 @@ function setHoleMatrixPill(key){
   document.querySelectorAll('[id^="hmpill-"]').forEach(btn=>{
     const k=btn.id.replace('hmpill-','');
     const on=k===key;
-    btn.style.borderColor=on?'rgba(10,132,255,0.6)':'rgba(255,255,255,0.12)';
-    btn.style.background=on?'rgba(10,132,255,0.18)':'rgba(255,255,255,0.04)';
-    btn.style.color=on?'#4da3ff':'rgba(255,255,255,0.4)';
+    btn.style.borderColor=on?'rgba(10,132,255,0.6)':'';
+    btn.style.background=on?'rgba(10,132,255,0.18)':'';
+    btn.style.color=on?'var(--blue)':'';
   });
 }
 
@@ -3932,10 +3933,10 @@ function buildMatrixHTML(gTot,n,fs,hfs){
 
   // Pill Filter HTML
   const pillsHTML=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
-    <button id="mpill-all" onclick="setMatrixPill('all')" style="padding:6px 14px;border-radius:16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid rgba(10,132,255,0.6);background:rgba(10,132,255,0.18);color:#4da3ff">
+    <button id="mpill-all" onclick="setMatrixPill('all')" style="padding:6px 14px;border-radius:16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid rgba(10,132,255,0.6);background:rgba(10,132,255,0.18);color:var(--blue)">
       📊 รวม
     </button>
-    ${games.map(k=>`<button id="mpill-${k}" onclick="setMatrixPill('${k}')" style="padding:6px 14px;border-radius:16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.4)">
+    ${games.map(k=>`<button id="mpill-${k}" onclick="setMatrixPill('${k}')" style="padding:6px 14px;border-radius:16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid var(--bg4);background:var(--fill);color:var(--lbl2)">
       ${gameIcons[k]} ${gameNames[k]}
     </button>`).join('')}
   </div>`;
@@ -3960,9 +3961,9 @@ function setMatrixPill(key){
   document.querySelectorAll('[id^="mpill-"]').forEach(btn=>{
     const k=btn.id.replace('mpill-','');
     const on=k===key;
-    btn.style.borderColor=on?'rgba(10,132,255,0.6)':'rgba(255,255,255,0.12)';
-    btn.style.background=on?'rgba(10,132,255,0.18)':'rgba(255,255,255,0.04)';
-    btn.style.color=on?'#4da3ff':'rgba(255,255,255,0.4)';
+    btn.style.borderColor=on?'rgba(10,132,255,0.6)':'';
+    btn.style.background=on?'rgba(10,132,255,0.18)':'';
+    btn.style.color=on?'var(--blue)':'';
   });
   // re-render table
   const thS=`padding:9px 4px;font-size:${hfs};font-weight:700;text-align:center;background:var(--bg3);border:0.5px solid var(--sep)`;
