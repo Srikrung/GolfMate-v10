@@ -2764,7 +2764,7 @@ function calcTeamHoleH2H(h){
   const r=G.team.val, cr=G.team.chuanVal*r;
   const dm=G.doubleRe.on?(G.doubleRe.mults[h]||1):1;
 
-  // แบ่งผู้เล่น: teamA, teamB, soloA (Solo ในทีม A), soloB (Solo ในทีม B)
+  // แบ่งผู้เล่น
   const teamA=[],teamB=[],soloA=[],soloB=[];
   players.forEach((_,p)=>{
     if(scores[p][h]===null||skipData[h]?.[p]?.has('team'))return;
@@ -2774,63 +2774,60 @@ function calcTeamHoleH2H(h){
     else { if(t==='A')teamA.push(p);else teamB.push(p); }
   });
 
-  // เรียงตามสกอร์ดีสุด (น้อยสุด) → จับคู่ตำแหน่ง
+  // เรียงตามสกอร์ดีสุด → จับคู่ตำแหน่ง
   teamA.sort((a,b)=>scores[a][h]-scores[b][h]);
   teamB.sort((a,b)=>scores[a][h]-scores[b][h]);
 
-  // track wins/losses per player สำหรับเช็ค ช้วน
-  const wins={}, losses={}, matchCount={};
-  players.forEach((_,p)=>{ wins[p]=0; losses[p]=0; matchCount[p]=0; });
-
-  const recordMatch=(p1,p2)=>{
-    const s1=scores[p1][h],s2=scores[p2][h];
-    if(s1===null||s2===null)return;
-    matchCount[p1]++; matchCount[p2]++;
-    if(s1<s2){ wins[p1]++; losses[p2]++; }
-    else if(s2<s1){ wins[p2]++; losses[p1]++; }
-  };
-
-  // H2H pairs: A[i] vs B[i] (จับตำแหน่ง)
   const matchLen=Math.min(teamA.length,teamB.length);
-  for(let i=0;i<matchLen;i++) recordMatch(teamA[i],teamB[i]);
 
-  // Solo A สู้กับทุกคนในทีม B
-  soloA.forEach(sp=>teamB.forEach(op=>recordMatch(sp,op)));
-  // Solo B สู้กับทุกคนในทีม A
-  soloB.forEach(sp=>teamA.forEach(op=>recordMatch(sp,op)));
+  // ─── Regular H2H pairs ───
+  // นับ wA, wB เพื่อตัดสิน ช้วน ระดับทีม
+  let wA=0,wB=0;
+  for(let i=0;i<matchLen;i++){
+    const sa=scores[teamA[i]][h], sb=scores[teamB[i]][h];
+    if(sa<sb) wA++;
+    else if(sb<sa) wB++;
+  }
+  // ช้วน ระดับทีม: ต้องมีอย่างน้อย 2 คู่ และแพ้ทุกคู่
+  const chuanA = wA===0 && wB>0 && matchLen>=2;
+  const chuanB = wB===0 && wA>0 && matchLen>=2;
 
-  // คำนวณเงิน — ช้วน = แพ้ทุกคู่ที่ตัวเองมี
-  const allPlayers=[...teamA,...teamB,...soloA,...soloB];
-  allPlayers.forEach(p=>{
-    if(matchCount[p]===0)return;
-    const isChuan=losses[p]===matchCount[p]&&wins[p]===0;
-    // คำนวณจากคู่ที่ชนะ/แพ้ตัวเอง
-    const amt=(isChuan?cr:r)*dm;
-    if(losses[p]===matchCount[p]&&wins[p]===0){
-      // แพ้ทุกคู่ → ช้วน: จ่าย amt รวมทั้งหมด กระจายให้ฝ่ายชนะ
-      m[p]-=amt*matchCount[p];
-      // หาคู่ที่แพ้แล้วบวกให้
-      // (จะ double-count ถ้าทำสองฝ่าย ดังนั้นทำเฉพาะ loser)
+  for(let i=0;i<matchLen;i++){
+    const a=teamA[i], b=teamB[i];
+    const sa=scores[a][h], sb=scores[b][h];
+    if(sa===null||sb===null)continue;
+    if(sa<sb){
+      const amt=(chuanB?cr:r)*dm;
+      m[a]+=amt; m[b]-=amt;
+    } else if(sb<sa){
+      const amt=(chuanA?cr:r)*dm;
+      m[b]+=amt; m[a]-=amt;
     }
-  });
+  }
 
-  // แก้ให้ถูกต้อง: คำนวณต่อคู่ โดยเช็ค ช้วน ระดับผู้เล่น
-  // reset แล้วคำนวณใหม่ต่อคู่
-  m.fill(0);
-  const resolvePair=(p1,p2)=>{
-    const s1=scores[p1][h],s2=scores[p2][h];
-    if(s1===null||s2===null)return;
-    const p1Chuan=losses[p1]===matchCount[p1]&&matchCount[p1]>0&&wins[p1]===0;
-    const p2Chuan=losses[p2]===matchCount[p2]&&matchCount[p2]>0&&wins[p2]===0;
-    const useChuan=p1Chuan||p2Chuan;
-    const amt=(useChuan?cr:r)*dm;
-    if(s1<s2){m[p1]+=amt;m[p2]-=amt;}
-    else if(s2<s1){m[p2]+=amt;m[p1]-=amt;}
+  // ─── Solo pairs ───
+  // Solo ช้วน: solo แพ้ทุกคน (ต้องสู้ >= 2 คน และแพ้ทุกคน)
+  const resolveSolo=(sp, opps)=>{
+    let soloW=0, soloL=0;
+    const results=[];
+    opps.forEach(op=>{
+      const ss=scores[sp][h], os=scores[op][h];
+      if(ss===null||os===null)return;
+      if(ss<os){ soloW++; results.push({op,win:true}); }
+      else if(os<ss){ soloL++; results.push({op,win:false}); }
+      else { results.push({op,win:null}); }
+    });
+    const soloChuan = soloL===opps.length && soloW===0 && opps.length>=2;
+    results.forEach(({op,win})=>{
+      if(win===null)return;
+      const amt=(soloChuan?cr:r)*dm;
+      if(win){m[sp]+=amt;m[op]-=amt;}
+      else{m[op]+=amt;m[sp]-=amt;}
+    });
   };
 
-  for(let i=0;i<matchLen;i++) resolvePair(teamA[i],teamB[i]);
-  soloA.forEach(sp=>teamB.forEach(op=>resolvePair(sp,op)));
-  soloB.forEach(sp=>teamA.forEach(op=>resolvePair(sp,op)));
+  soloA.forEach(sp=>resolveSolo(sp,teamB));
+  soloB.forEach(sp=>resolveSolo(sp,teamA));
 
   return m;
 }
@@ -3893,7 +3890,7 @@ function saveSession(){
       v:1,players,scores,pars,currentHole,gameStarted,
       G:{bite:{on:G.bite.on,val:G.bite.val,mults:G.bite.mults},
         olympic:{on:G.olympic.on,val:G.olympic.val},
-        team:{on:G.team.on,val:G.team.val,chuanVal:G.team.chuanVal,swapType:G.team.swapType,baseTeams:G.team.baseTeams,domoTeams:G.team.domoTeams},
+        team:{on:G.team.on,val:G.team.val,chuanVal:G.team.chuanVal,mode:G.team.mode,swapType:G.team.swapType,baseTeams:G.team.baseTeams,domoTeams:G.team.domoTeams},
         farNear:{on:G.farNear.on,val:G.farNear.val},
         turbo:{on:G.turbo.on,holes:[...G.turbo.holes],mult:G.turbo.mult},
         doubleRe:{on:G.doubleRe.on,mults:G.doubleRe.mults},
