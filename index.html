@@ -460,7 +460,7 @@ body.light .ad-banner{background:#fff;border:0.5px solid rgba(0,0,0,0.08);box-sh
   <div class="group">
     <div class="row" id="gr-srikrung">
       <div class="r-icon" style="background:rgba(52,199,89,0.15)">⛳</div>
-      <div class="r-text"><div class="r-title">Srikrung Golf Day</div><div class="r-sub">เก็บคะแนน FW · GIR · PUTT</div></div>
+      <div class="r-text"><div class="r-title">Srikrung Golf Day</div><div class="r-sub">เก็บคะแนน FW · GIR · PUTT · ตัวแทน 1 คนจดสกอร์ · แต่ละคนจด FW/GIR/PUTT ตัวเอง</div></div>
       <div class="sw" id="sw-srikrung" onclick="toggleSw('srikrung')"></div>
     </div>
   </div>
@@ -615,6 +615,14 @@ body.light .ad-banner{background:#fff;border:0.5px solid rgba(0,0,0,0.08);box-sh
           · ถ้าซิงก์ไม่สำเร็จ มีแถบแจ้งเตือนขึ้นด้านบนอัตโนมัติ
         </div>
       </div>
+      <!-- หมายเหตุ Srikrung -->
+      <div style="margin-top:8px;padding:10px 12px;background:rgba(48,209,88,0.07);border-radius:10px;border-left:3px solid var(--green)">
+        <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">⛳ Srikrung Golf Day</div>
+        <div style="font-size:12px;color:var(--lbl2);line-height:1.8">
+          · ตั้ง <strong style="color:var(--lbl)">ตัวแทน 1 คน</strong> เป็นผู้จดสกอร์รายหลุมของทุกคน<br>
+          · ส่วน <strong style="color:var(--lbl)">FW · GIR · PUTT</strong> แต่ละคนจดของตัวเองในโทรศัพท์ตัวเอง
+        </div>
+      </div>
     </div>
 
     <!-- ฟิลด์ตั้งค่า -->
@@ -665,6 +673,27 @@ body.light .ad-banner{background:#fff;border:0.5px solid rgba(0,0,0,0.08);box-sh
       ทดสอบการเชื่อมต่อ
     </button>
     <div id="test-result" style="display:none;text-align:center;font-size:13px;padding:8px;border-radius:8px;margin-bottom:12px"></div>
+
+    <!-- Join Room -->
+    <div style="background:var(--bg2);border-radius:14px;overflow:hidden;margin-bottom:12px;box-shadow:var(--card-shadow)">
+      <div style="padding:12px 14px;border-bottom:0.5px solid var(--sep)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-size:18px">🔗</span>
+          <div style="font-size:15px;font-weight:700;color:var(--lbl)">Join Room <span style="font-size:12px;font-weight:500;color:var(--lbl2)">(สำหรับคนเข้าร่วม)</span></div>
+        </div>
+        <div style="font-size:12px;color:var(--lbl2);line-height:1.6">กรอก Room Code เดียวกับคนตั้งห้อง → เลือกชื่อตัวเอง → จด FW/GIR/PUTT เท่านั้น</div>
+      </div>
+      <div style="padding:12px 14px">
+        <button onclick="joinRoomLookup()" style="width:100%;padding:11px;background:rgba(10,132,255,0.12);border:1.5px solid var(--blue);border-radius:10px;color:var(--blue);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">
+          🔍 ค้นหาห้อง
+        </button>
+        <div id="join-player-list" style="display:none;margin-top:10px">
+          <div style="font-size:12px;color:var(--lbl2);margin-bottom:6px">เลือกชื่อของคุณ:</div>
+          <div id="join-names" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+        <div id="join-status" style="display:none;margin-top:8px;font-size:13px;text-align:center;padding:8px;border-radius:8px"></div>
+      </div>
+    </div>
 
     <button onclick="saveOnlineSetup()" class="cta">บันทึกการตั้งค่า</button>
     <button onclick="goTab('setup')" class="nav-b" style="width:100%;margin-top:8px">← กลับหน้าตั้งค่า</button>
@@ -1054,6 +1083,8 @@ let G={
 
 // ── SYNC ──
 let syncEnabled=false;
+let joinMode=false;       // true = คนเข้าร่วม (join) ไม่ใช่คนตั้งห้อง
+let joinPlayerName='';    // ชื่อที่เลือกใน join mode
 function toggleSyncSw(){
   syncEnabled=!syncEnabled;
   document.getElementById('sw-sync').classList.toggle('on',syncEnabled);
@@ -1180,6 +1211,96 @@ async function syncToFirebase(){
   });
 }
 
+// ── JOIN ROOM ──
+async function joinRoomLookup(){
+  const room=getRoomCode();
+  if(!room||room==='DEFAULT'){
+    const s=document.getElementById('join-status');
+    s.style.display='block';s.style.background='rgba(255,69,58,0.12)';s.style.color='var(--red)';
+    s.textContent='⚠️ กรุณาเลือก Room Code ก่อน';
+    return;
+  }
+  const gameDate=document.getElementById('game-date')?.value||new Date().toISOString().split('T')[0];
+  const safeDateKey=gameDate.replace(/-/g,'');
+  const s=document.getElementById('join-status');
+  s.style.display='block';s.style.background='rgba(10,132,255,0.1)';s.style.color='var(--blue)';
+  s.textContent='⟳ กำลังค้นหาห้อง...';
+
+  const config=await getRoomConfig(room,safeDateKey);
+  if(!config||config.dateKey!==safeDateKey){
+    s.style.background='rgba(255,69,58,0.12)';s.style.color='var(--red)';
+    s.textContent=`❌ ไม่พบห้อง ${room} วันนี้ — กรุณาตรวจสอบ Room Code`;
+    document.getElementById('join-player-list').style.display='none';
+    return;
+  }
+
+  const names=config.players||[];
+  s.style.display='none';
+  const list=document.getElementById('join-player-list');
+  const namesDiv=document.getElementById('join-names');
+  namesDiv.innerHTML=names.map(n=>`
+    <button onclick="selectJoinPlayer('${n.replace(/'/g,"\\'")}')"
+      id="join-btn-${n.replace(/[^a-zA-Z0-9ก-ฮ]/g,'_')}"
+      style="padding:10px 14px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+      border:1.5px solid ${joinPlayerName===n?'var(--green)':'var(--bg4)'};
+      background:${joinPlayerName===n?'rgba(48,209,88,0.12)':'var(--bg3)'};
+      color:${joinPlayerName===n?'var(--green)':'var(--lbl)'};text-align:left">
+      ${joinPlayerName===n?'✓ ':''} ${n}
+    </button>`).join('');
+  list.style.display='block';
+}
+
+function selectJoinPlayer(name){
+  joinMode=true;
+  joinPlayerName=name;
+  const s=document.getElementById('join-status');
+  s.style.display='block';
+  s.style.background='rgba(48,209,88,0.12)';s.style.color='var(--green)';
+  s.textContent=`✅ เลือกแล้ว: ${name} — กด "บันทึกการตั้งค่า" เพื่อเปิดใช้งาน`;
+  // อัปเดตสีปุ่มทุกตัว
+  document.querySelectorAll('#join-names button').forEach(btn=>{
+    const n=btn.textContent.trim().replace(/^✓\s*/,'');
+    const sel=n===name;
+    btn.style.borderColor=sel?'var(--green)':'var(--bg4)';
+    btn.style.background=sel?'rgba(48,209,88,0.12)':'var(--bg3)';
+    btn.style.color=sel?'var(--green)':'var(--lbl)';
+    btn.textContent=(sel?'✓ ':'')+n;
+  });
+}
+
+// ── Sync เฉพาะ FW/GIR/PUTT (Join Mode) ──
+async function syncJoinToFirebase(){
+  if(!syncEnabled||!joinMode||!joinPlayerName)return;
+  const room=getRoomCode();
+  if(!room||room==='DEFAULT')return;
+  const gameDate=document.getElementById('game-date')?.value||new Date().toISOString().split('T')[0];
+  const safeDateKey=gameDate.replace(/-/g,'');
+
+  const myIdx=players.findIndex(p=>p.name===joinPlayerName);
+  if(myIdx<0){showSyncBar('⚠ ไม่พบชื่อ '+joinPlayerName+' ในเกม','rgba(255,159,10,0.9)',3000);return;}
+
+  const sg=G.srikrung.on?(srikrungData.map(h=>h[myIdx]||{fw:null,gir:null,putt:null})):[];
+  const payload={
+    fw:sg.reduce((s,h)=>s+(h&&h.fw?1:0),0),
+    gir:sg.reduce((s,h)=>s+(h&&h.gir?1:0),0),
+    putt:sg.some(h=>h&&h.putt!==null)?sg.reduce((s,h)=>s+(h&&h.putt!==null?h.putt:0),0):null,
+    srikrung:sg,
+    updatedAt:Date.now()
+  };
+
+  const safeName=joinPlayerName.replace(/[.#$/[\]]/g,'_');
+  try{
+    showSyncBar('⟳ Sync FW/GIR/PUTT...','rgba(10,132,255,0.9)',0);
+    const res=await fetch(`${FB_URL}/scores/${safeDateKey}/${room}/${safeName}.json`,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    if(res.ok){showSyncBar(`✓ Sync FW/GIR/PUTT สำเร็จ (${joinPlayerName})`,'rgba(48,209,88,0.9)',2000);}
+    else{showSyncBar('⚠ Sync ล้มเหลว','rgba(255,159,10,0.9)',2500);}
+  }catch(e){showSyncBar('✗ ไม่มีสัญญาณ','rgba(255,69,58,0.9)',2500);}
+}
+
 async function syncToSheets(){
   if(!syncEnabled)return;
   const url=getApiUrl();
@@ -1199,7 +1320,8 @@ async function syncToSheets(){
 
 // Sync ทั้ง Firebase + Sheets
 function syncAll(){
-  syncToFirebase();
+  if(joinMode) syncJoinToFirebase();
+  else syncToFirebase();
   syncToSheets();
 }
 
@@ -2586,8 +2708,17 @@ function goOnlineSetup(){
 }
 function saveOnlineSetup(){
   const room=getRoomCode();const url=getApiUrl();
-  try{localStorage.setItem('golfmate_online',JSON.stringify({room,url,sync:syncEnabled}));}catch(e){}
-  updateOnlineStatusLabel();goTab('setup');
+  // บันทึก joinMode ด้วย
+  try{localStorage.setItem('golfmate_online',JSON.stringify({room,url,sync:syncEnabled,joinMode,joinPlayerName}));}catch(e){}
+  updateOnlineStatusLabel();
+  if(joinMode){
+    // Join mode — ไม่ redirect กลับ ให้ค้างอยู่หน้านี้ แจ้งผล
+    const s=document.getElementById('join-status');
+    s.style.display='block';s.style.background='rgba(48,209,88,0.12)';s.style.color='var(--green)';
+    s.textContent=`✅ บันทึกแล้ว — Join ในฐานะ "${joinPlayerName}" · เปิด Srikrung Golf Day แล้วจด FW/GIR/PUTT ได้เลย`;
+  } else {
+    goTab('setup');
+  }
 }
 function updateOnlineStatusLabel(){
   const lbl=document.getElementById('online-status-lbl');if(!lbl)return;
@@ -2630,6 +2761,7 @@ async function testConnection(){
     }
     if(saved.url&&document.getElementById('api-url'))document.getElementById('api-url').value=saved.url;
     if(saved.sync!==undefined)syncEnabled=saved.sync;
+    if(saved.joinMode){joinMode=saved.joinMode;joinPlayerName=saved.joinPlayerName||'';}
     setTimeout(updateOnlineStatusLabel,400);
   }catch(e){}
 })();
