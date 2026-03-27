@@ -418,26 +418,11 @@ body.light .ad-banner{background:#fff;border:0.5px solid rgba(0,0,0,0.08);box-sh
 
     <div class="row" id="gr-team">
       <div class="r-icon" style="background:rgba(48,209,88,0.12)">🤝</div>
-      <div class="r-text"><div class="r-title">ทีม</div><div class="r-sub" id="team-row-sub">Classic · Best1+Best2 · ช้วน</div></div>
+      <div class="r-text"><div class="r-title">ทีม</div><div class="r-sub" id="team-row-sub">H2H · จับคู่ตำแหน่ง · ช้วน</div></div>
       <div class="sw" id="sw-team" onclick="toggleSw('team')"></div>
     </div>
     <div id="gb-team" style="display:none;padding:8px 14px 12px;border-bottom:0.5px solid var(--sep)">
-      <!-- mode selector -->
-      <div style="font-size:11px;color:var(--lbl2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px">โหมดคิดเงิน</div>
-      <div style="display:flex;gap:6px;margin-bottom:10px">
-        <button id="team-mode-classic" onclick="setTeamMode('classic')"
-          style="flex:1;padding:9px 6px;border-radius:10px;border:1.5px solid var(--blue);background:rgba(10,132,255,0.18);color:var(--blue);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">
-          Classic<br><span style="font-size:10px;font-weight:400">Best1+Best2</span>
-        </button>
-        <button id="team-mode-h2h" onclick="setTeamMode('h2h')"
-          style="flex:1;padding:9px 6px;border-radius:10px;border:1.5px solid var(--bg4);background:var(--bg3);color:var(--lbl2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">
-          Head-to-Head<br><span style="font-size:10px;font-weight:400">จับคู่ตำแหน่ง</span>
-        </button>
-      </div>
-      <!-- H2H note (แสดงเฉพาะ H2H) -->
-      <div id="h2h-size-row" style="display:none;margin-bottom:10px">
-        <div id="h2h-note" style="font-size:11px;color:var(--lbl2)">จับคู่ตามสกอร์ดีสุด · คนเกิน (ทีมไม่เท่ากัน) → Solo แข่งทุกคนฝั่งตรงข้าม ไม่มีช้วน</div>
-      </div>
+      <div style="font-size:11px;color:var(--lbl2);margin-bottom:8px">แบ่งครึ่ง → ทีม A / B · คนเกินเลือก Solo (สู้ทุกคนฝั่งตรงข้าม) หรือ ไม่เล่น</div>
       <!-- ราคา -->
       <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
         <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:var(--lbl2)">1 พอยต์ =</span><input type="number" id="gv-team" value="20" min="1" style="width:68px;border-radius:8px;padding:7px;text-align:center;font-size:15px"><span style="font-size:13px;color:var(--lbl2)">บาท</span></div>
@@ -1057,7 +1042,7 @@ let G={
             mults:{hio:50,albatross:4,eagle:3,birdie:2} // #11 ตัวคูณหลัก เปิด/ปิดได้
            },
   olympic: {on:false,val:20},
-  team:    {on:false,val:20,chuanVal:4,mode:'classic',swapType:'domo',baseTeams:[],domoTeams:[]},
+  team:    {on:false,val:20,chuanVal:4,mode:'h2h',swapType:'domo',baseTeams:[],domoTeams:[]},
   farNear: {on:false,val:20},
   turbo:   {on:true,holes:new Set([8,17]),mult:2},
   doubleRe:{on:false,mults:Array(18).fill(1)},
@@ -1319,41 +1304,11 @@ function toggleTeamSolo(p){
 }
 // ── TEAM MODE (setup) ──
 function setTeamMode(mode){
-  const classic=document.getElementById('team-mode-classic');
-  const h2h=document.getElementById('team-mode-h2h');
-  const sizeRow=document.getElementById('h2h-size-row');
-  const chuanRow=document.getElementById('team-chuan-row');
-  const sub=document.getElementById('team-row-sub');
-  if(mode==='h2h'){
-    h2h.style.background='rgba(10,132,255,0.18)';h2h.style.borderColor='var(--blue)';h2h.style.color='var(--blue)';
-    h2h.classList.add('h2h-mode-on');
-    classic.style.background='var(--bg3)';classic.style.borderColor='var(--bg4)';classic.style.color='var(--lbl2)';
-    classic.classList.remove('h2h-mode-on');
-    sizeRow.style.display='block';
-    // hide ช้วน for 1v1, show for 2v2+
-    const sz=parseInt(document.querySelector('.h2h-sz-btn.h2h-sz-on')?.dataset?.sz||'1');
-    chuanRow.style.display=sz>=2?'flex':'none';
-    if(sub)sub.textContent='Head-to-Head · จับคู่ตำแหน่ง';
-  } else {
-    classic.style.background='rgba(10,132,255,0.18)';classic.style.borderColor='var(--blue)';classic.style.color='var(--blue)';
-    classic.classList.add('h2h-mode-on');
-    h2h.style.background='var(--bg3)';h2h.style.borderColor='var(--bg4)';h2h.style.color='var(--lbl2)';
-    h2h.classList.remove('h2h-mode-on');
-    sizeRow.style.display='none';
-    chuanRow.style.display='flex';
-    if(sub)sub.textContent='Classic · Best1+Best2 · ช้วน';
-  }
+  // H2H only — Classic ถูกตัดออก
+  G.team.mode='h2h';
 }
 function setH2HSize(sz){
-  document.querySelectorAll('.h2h-sz-btn').forEach(b=>{
-    const on=parseInt(b.dataset.sz)===sz;
-    b.style.background=on?'rgba(10,132,255,0.18)':'var(--bg3)';
-    b.style.borderColor=on?'var(--blue)':'var(--bg4)';
-    b.style.color=on?'var(--blue)':'var(--lbl2)';
-    if(on)b.classList.add('h2h-sz-on');else b.classList.remove('h2h-sz-on');
-  });
-  // toggle ช้วน row
-  document.getElementById('team-chuan-row').style.display=sz>=2?'flex':'none';
+  // deprecated — kept for backward compat
 }
 
 // ── TOGGLE GAME (iOS switch style) ──
@@ -1455,7 +1410,7 @@ function startGame(){
     const ve=document.getElementById(`gv-${k}`);if(ve)G[k].val=Math.max(1,+ve.value||20);
   });
   G.team.chuanVal=Math.max(1,+document.getElementById('gv-team-chuan')?.value||4);
-  G.team.mode=document.getElementById('team-mode-h2h')?.classList.contains('h2h-mode-on')?'h2h':'classic';
+  G.team.mode='h2h'; // H2H เท่านั้น
   G.team.swapType='domo';
   for(let i=0;i<n;i++){if(!G.team.baseTeams[i])G.team.baseTeams[i]=i%2===0?'A':'B';}
   G.team.domoTeams=Array(18).fill(null).map(()=>[...G.team.baseTeams]);
@@ -1608,11 +1563,8 @@ function showHole(h){
       }).join('')}
     </div>
 
-    <!-- sub-pills ทีม (Classic/H2H + เบิ้ล-รี) -->
-    ${G.team.on?`<div id="team-sub-pills-${h}" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 14px;border-bottom:0.5px solid var(--sep)">
-      <button onclick="setTeamModeMid('classic',${h})" style="padding:4px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${G.team.mode==='classic'?'rgba(10,132,255,0.5)':'rgba(255,255,255,0.1)'};background:${G.team.mode==='classic'?'rgba(10,132,255,0.15)':'rgba(255,255,255,0.04)'};color:${G.team.mode==='classic'?'#4da3ff':'rgba(255,255,255,0.3)'}">Classic</button>
-      <button onclick="setTeamModeMid('h2h',${h})" style="padding:4px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${G.team.mode==='h2h'?'rgba(10,132,255,0.5)':'rgba(255,255,255,0.1)'};background:${G.team.mode==='h2h'?'rgba(10,132,255,0.15)':'rgba(255,255,255,0.04)'};color:${G.team.mode==='h2h'?'#4da3ff':'rgba(255,255,255,0.3)'}">H2H</button>
-      <div style="width:1px;background:rgba(255,255,255,0.1);margin:0 2px"></div>
+    <!-- sub-pills ทีม (เบิ้ล-รี เท่านั้น) -->
+    ${G.team.on&&G.doubleRe.on?`<div id="team-sub-pills-${h}" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 14px;border-bottom:0.5px solid var(--sep)">
       <button onclick="drSet(${h},2)" style="padding:4px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${G.doubleRe.on&&G.doubleRe.mults[h]===2?'rgba(255,215,0,0.5)':'rgba(255,255,255,0.1)'};background:${G.doubleRe.on&&G.doubleRe.mults[h]===2?'rgba(255,215,0,0.15)':'rgba(255,255,255,0.04)'};color:${G.doubleRe.on&&G.doubleRe.mults[h]===2?'var(--yellow)':'rgba(255,255,255,0.3)'}">เบิ้ล ×2</button>
       <button onclick="drSet(${h},3)" style="padding:4px 12px;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1.5px solid ${G.doubleRe.on&&G.doubleRe.mults[h]===3?'rgba(48,209,88,0.5)':'rgba(255,255,255,0.1)'};background:${G.doubleRe.on&&G.doubleRe.mults[h]===3?'rgba(48,209,88,0.15)':'rgba(255,255,255,0.04)'};color:${G.doubleRe.on&&G.doubleRe.mults[h]===3?'var(--green)':'rgba(255,255,255,0.3)'}">รี ×3</button>
     </div>`:''}
@@ -1704,13 +1656,7 @@ function drSet(h,m){
   }
   showHole(h);updateTotals();autoSave();
 }
-function setTeamModeMid(mode,h){
-  G.team.mode=mode;
-  // sync ปุ่ม setup ด้วย
-  document.getElementById('team-mode-classic')?.classList.toggle('h2h-mode-on',mode==='classic');
-  document.getElementById('team-mode-h2h')?.classList.toggle('h2h-mode-on',mode==='h2h');
-  showHole(h);updateTotals();autoSave();
-}
+function setTeamModeMid(mode,h){ G.team.mode='h2h'; showHole(h); }
 
 // ── WIDGET REFRESH ──
 function lbToggleMatrix(h){
@@ -2780,105 +2726,81 @@ function calcOlympicHole(h){
 }
 function calcTeamHole(h){
   if(!G.team.on)return Array(players.length).fill(0);
-  return G.team.mode==='h2h'?calcTeamHoleH2H(h):calcTeamHoleClassic(h);
-}
-function calcTeamHoleClassic(h){
-  const m=Array(players.length).fill(0);
-  const dm=G.doubleRe.on?(G.doubleRe.mults[h]||1):1;
-  const tMap={A:[],B:[],C:[]};
-  players.forEach((_,p)=>{
-    if(scores[p][h]===null||skipData[h]?.[p]?.has('team'))return;
-    const t=getTeamForHole(h,p);if(tMap[t])tMap[t].push(p);
-  });
-  const active=Object.keys(tMap).filter(k=>tMap[k].length>0),r=G.team.val*dm,cr=G.team.chuanVal*G.team.val*dm;
-  for(let i=0;i<active.length;i++)for(let j=i+1;j<active.length;j++){
-    const t1=active[i],t2=active[j];
-    const getScores=(tKey)=>tMap[tKey].map(p=>{
-      const s=scores[p][h];
-      return teamSoloPlayers.has(p)?[s,s]:[s];
-    }).flat().sort((a,b)=>a-b);
-    const s1=getScores(t1),s2=getScores(t2);
-    let w1=0,w2=0;
-    if(s1[0]<s2[0])w1++;else if(s2[0]<s1[0])w2++;
-    const b12=s1[1]??s1[0],b22=s2[1]??s2[0];
-    if(b12<b22)w1++;else if(b22<b12)w2++;
-    if(w1===w2)continue;
-    const winT=w1>w2?t1:t2,loseT=w1>w2?t2:t1;
-    const isChuan=(w1===2&&w2===0)||(w2===2&&w1===0),baseAmt=isChuan?cr:r;
-    const loseTotal=tMap[loseT].length*baseAmt,winN=tMap[winT].length;
-    const perWin=Math.floor(loseTotal/winN),rem=loseTotal-perWin*winN;
-    tMap[winT].forEach((p,idx)=>m[p]+=(idx===0?perWin+rem:perWin));
-    tMap[loseT].forEach(p=>m[p]-=baseAmt);
-  }
-  return m;
+  return calcTeamHoleH2H(h);
 }
 function calcTeamHoleH2H(h){
   const m=Array(players.length).fill(0);
-  const r=G.team.val,cr=G.team.chuanVal*r;
+  const r=G.team.val, cr=G.team.chuanVal*r;
   const dm=G.doubleRe.on?(G.doubleRe.mults[h]||1):1;
-  // แบ่งทีม A, B (Solo = คนเกิน)
-  const teamA=[],teamB=[],solos=[];
+
+  // แบ่งผู้เล่น: teamA, teamB, soloA (Solo ในทีม A), soloB (Solo ในทีม B)
+  const teamA=[],teamB=[],soloA=[],soloB=[];
   players.forEach((_,p)=>{
     if(scores[p][h]===null||skipData[h]?.[p]?.has('team'))return;
     const t=getTeamForHole(h,p);
-    if(t==='A')teamA.push(p);else if(t==='B')teamB.push(p);
+    const isSolo=teamSoloPlayers.has(p);
+    if(isSolo){ if(t==='A')soloA.push(p);else soloB.push(p); }
+    else { if(t==='A')teamA.push(p);else teamB.push(p); }
   });
-  // Solo = คนที่เกินจากทีมใหญ่กว่า
-  const minLen=Math.min(teamA.length,teamB.length);
-  if(teamA.length>minLen)solos.push(...teamA.splice(minLen));
-  else if(teamB.length>minLen)solos.push(...teamB.splice(minLen));
 
-  // เรียงสกอร์ดีสุด (ต่ำสุด) ก่อน
+  // เรียงตามสกอร์ดีสุด (น้อยสุด) → จับคู่ตำแหน่ง
   teamA.sort((a,b)=>scores[a][h]-scores[b][h]);
   teamB.sort((a,b)=>scores[a][h]-scores[b][h]);
 
-  // จับคู่ A[i] vs B[i] — นับ W/L รวมทั้งทีม
-  let wA=0,wB=0;
-  const pairs=[];
-  for(let i=0;i<teamA.length;i++){
-    const sa=scores[teamA[i]][h],sb=scores[teamB[i]][h];
-    if(sa<sb){wA++;pairs.push({a:teamA[i],b:teamB[i],win:'A'});}
-    else if(sb<sa){wB++;pairs.push({a:teamA[i],b:teamB[i],win:'B'});}
-    else{pairs.push({a:teamA[i],b:teamB[i],win:'draw'});}
-  }
+  // track wins/losses per player สำหรับเช็ค ช้วน
+  const wins={}, losses={}, matchCount={};
+  players.forEach((_,p)=>{ wins[p]=0; losses[p]=0; matchCount[p]=0; });
 
-  if(pairs.length>0){
-    const chuanA=(wA===0&&wB>0),chuanB=(wB===0&&wA>0);
-    if(chuanA||chuanB){
-      // ช้วน: จับคู่จ่าย 4pt flat
-      pairs.forEach(({a,b,win})=>{
-        if(win==='draw')return;
-        const amt=cr*dm;
-        if(win==='B'){m[a]-=amt;m[b]+=amt;}
-        else{m[b]-=amt;m[a]+=amt;}
-      });
-    } else {
-      // ปกติ: net = wA - wB → ชนะสุทธิ N pt โอนจากทีมแพ้ไปทีมชนะ
-      const net=wA-wB;
-      if(net!==0){
-        const winners=net>0?teamA:teamB,losers=net>0?teamB:teamA;
-        const totalPt=Math.abs(net)*r*dm;
-        const perWin=Math.floor(totalPt/winners.length),rem=totalPt-perWin*winners.length;
-        const perLose=Math.floor(totalPt/losers.length),remL=totalPt-perLose*losers.length;
-        winners.forEach((p,i)=>m[p]+=(i===0?perWin+rem:perWin));
-        losers.forEach((p,i)=>m[p]-=(i===0?perLose+remL:perLose));
-      }
+  const recordMatch=(p1,p2)=>{
+    const s1=scores[p1][h],s2=scores[p2][h];
+    if(s1===null||s2===null)return;
+    matchCount[p1]++; matchCount[p2]++;
+    if(s1<s2){ wins[p1]++; losses[p2]++; }
+    else if(s2<s1){ wins[p2]++; losses[p1]++; }
+  };
+
+  // H2H pairs: A[i] vs B[i] (จับตำแหน่ง)
+  const matchLen=Math.min(teamA.length,teamB.length);
+  for(let i=0;i<matchLen;i++) recordMatch(teamA[i],teamB[i]);
+
+  // Solo A สู้กับทุกคนในทีม B
+  soloA.forEach(sp=>teamB.forEach(op=>recordMatch(sp,op)));
+  // Solo B สู้กับทุกคนในทีม A
+  soloB.forEach(sp=>teamA.forEach(op=>recordMatch(sp,op)));
+
+  // คำนวณเงิน — ช้วน = แพ้ทุกคู่ที่ตัวเองมี
+  const allPlayers=[...teamA,...teamB,...soloA,...soloB];
+  allPlayers.forEach(p=>{
+    if(matchCount[p]===0)return;
+    const isChuan=losses[p]===matchCount[p]&&wins[p]===0;
+    // คำนวณจากคู่ที่ชนะ/แพ้ตัวเอง
+    const amt=(isChuan?cr:r)*dm;
+    if(losses[p]===matchCount[p]&&wins[p]===0){
+      // แพ้ทุกคู่ → ช้วน: จ่าย amt รวมทั้งหมด กระจายให้ฝ่ายชนะ
+      m[p]-=amt*matchCount[p];
+      // หาคู่ที่แพ้แล้วบวกให้
+      // (จะ double-count ถ้าทำสองฝ่าย ดังนั้นทำเฉพาะ loser)
     }
-  }
-
-  // Solo: แข่งกับทุกคนฝั่งตรงข้าม (ไม่มีช้วน)
-  solos.forEach(sp=>{
-    const sScore=scores[sp][h];
-    const spTeam=G.team.domoTeams[h]?.[sp]||G.team.baseTeams[sp]||'A';
-    const opp=spTeam==='A'?teamB:teamA;
-    opp.forEach(op=>{
-      const oScore=scores[op][h];
-      if(sScore===null||oScore===null)return;
-      const amt=r*dm;
-      if(sScore<oScore){m[sp]+=amt;m[op]-=amt;}
-      else if(oScore<sScore){m[op]+=amt;m[sp]-=amt;}
-    });
   });
+
+  // แก้ให้ถูกต้อง: คำนวณต่อคู่ โดยเช็ค ช้วน ระดับผู้เล่น
+  // reset แล้วคำนวณใหม่ต่อคู่
+  m.fill(0);
+  const resolvePair=(p1,p2)=>{
+    const s1=scores[p1][h],s2=scores[p2][h];
+    if(s1===null||s2===null)return;
+    const p1Chuan=losses[p1]===matchCount[p1]&&matchCount[p1]>0&&wins[p1]===0;
+    const p2Chuan=losses[p2]===matchCount[p2]&&matchCount[p2]>0&&wins[p2]===0;
+    const useChuan=p1Chuan||p2Chuan;
+    const amt=(useChuan?cr:r)*dm;
+    if(s1<s2){m[p1]+=amt;m[p2]-=amt;}
+    else if(s2<s1){m[p2]+=amt;m[p1]-=amt;}
+  };
+
+  for(let i=0;i<matchLen;i++) resolvePair(teamA[i],teamB[i]);
+  soloA.forEach(sp=>teamB.forEach(op=>resolvePair(sp,op)));
+  soloB.forEach(sp=>teamA.forEach(op=>resolvePair(sp,op)));
+
   return m;
 }
 function calcFarNearHole(h){
