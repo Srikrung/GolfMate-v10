@@ -2155,8 +2155,8 @@ async function lbFetch(){
 
 // ── Score Alerts (Birdie+) ──
 function lbDetectAlerts(){
-  const now = lbGetThaiNow();
-  const ts = now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  const now = new Date();
+  const ts = now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Bangkok'});
   const pars = (lbAllP.find(p=>p.pars&&p.pars.length===18)||{pars:LB_PARS_DEFAULT}).pars;
   lbAllP.forEach(p=>{
     const sc = p.scores||[], ps = lbPrevSc[p.name]||[];
@@ -2165,7 +2165,7 @@ function lbDetectAlerts(){
     sc.forEach((s,h)=>{
       if(s===null||s===undefined) return;
       const key = p.name+'_'+h, par = pars[h]||4, diff = s-par;
-      if(diff >= -1) return;
+      if(diff > -1) return;
       if(holeChanged && lbPending[key]){ delete lbPending[key]; return; }
       if(s !== ps[h]){
         let type='Birdie', cls='bir';
@@ -2436,8 +2436,8 @@ function lbRenderTicker(){
   const sorted = [...vis].sort((a,b)=>{ const an=(a.total||0)-(a.hcp||0),bn=(b.total||0)-(b.hcp||0); return an-bn; });
   const lead = sorted[0];
   const puLd = [...vis].filter(p=>p.putt!=null).sort((a,b)=>a.putt-b.putt)[0];
-  const now = lbGetThaiNow();
-  const ts = now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const now = new Date();
+  const ts = now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'Asia/Bangkok'});
   const sep = '<span style="margin:0 1em;opacity:.2">◆</span>';
 
   // Ticker 1: Birdie+ alerts
