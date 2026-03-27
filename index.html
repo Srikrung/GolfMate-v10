@@ -1090,8 +1090,32 @@ async function getRoomPlayers(room,safeDateKey){
     if(!r.ok)return[];
     const d=await r.json();
     if(!d)return[];
-    return Object.values(d).filter(p=>p&&p.name).map(p=>p.name);
+    // กรองออก _room_config
+    return Object.entries(d).filter(([k,v])=>k!=='_room_config'&&v&&v.name).map(([,v])=>v.name);
   }catch(e){return[];}
+}
+
+// ── Room Config (Lock/Unlock) ──
+async function getRoomConfig(room,safeDateKey){
+  try{
+    const r=await fetch(`${FB_URL}/scores/${safeDateKey}/${room}/_room_config.json`);
+    if(!r.ok)return null;
+    const d=await r.json();
+    return d||null;
+  }catch(e){return null;}
+}
+async function lockRoom(room,safeDateKey,playerNames){
+  try{
+    await fetch(`${FB_URL}/scores/${safeDateKey}/${room}/_room_config.json`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        players:playerNames,
+        lockedAt:Date.now(),
+        dateKey:safeDateKey
+      })
+    });
+  }catch(e){}
 }
 
 // ── Firebase sync (REST API — ไม่ต้อง SDK) ──
@@ -1103,15 +1127,17 @@ async function syncToFirebase(){
   const gameDate=document.getElementById('game-date').value||new Date().toISOString().split('T')[0];
   const safeDateKey=gameDate.replace(/-/g,'');
 
-  // ── เช็คจำนวนคนในห้องก่อน Sync ──
-  const existingNames=await getRoomPlayers(room,safeDateKey);
-  const myNames=players.map(p=>p.name);
-  const newNames=myNames.filter(n=>!existingNames.includes(n));
-  const totalAfter=new Set([...existingNames,...myNames]).size;
-  if(totalAfter>ROOM_MAX){
-    const overCount=totalAfter-ROOM_MAX;
-    showSyncBar(`✋ ห้อง ${room} เต็มแล้ว (${existingNames.length}/${ROOM_MAX} คน) ไม่สามารถเพิ่มได้อีก ${overCount} คน`,'rgba(255,69,58,0.9)',4000);
-    return;
+  // ── เช็ค Room Lock ก่อน Sync ──
+  const config=await getRoomConfig(room,safeDateKey);
+  if(config&&config.dateKey===safeDateKey){
+    // ห้องล็อคแล้ว — เช็คว่าชื่อเราอยู่ในรายชื่อที่ล็อคไว้ไหม
+    const lockedNames=config.players||[];
+    const myNames=players.map(p=>p.name);
+    const notAllowed=myNames.filter(n=>!lockedNames.includes(n));
+    if(notAllowed.length>0){
+      showSyncBar(`🔒 ห้อง ${room} ถูกล็อคแล้ว ชื่อ "${notAllowed[0]}" ไม่ได้รับอนุญาต`,'rgba(255,69,58,0.9)',4000);
+      return;
+    }
   }
 
   players.forEach(async(pl,p)=>{
@@ -1144,7 +1170,7 @@ async function syncToFirebase(){
         body:JSON.stringify(payload)
       });
       if(res.ok){
-        showSyncBar(`✓ Sync สำเร็จ (${new Set([...existingNames,...myNames]).size}/${ROOM_MAX} คน)`,'rgba(48,209,88,0.9)',2000);
+        showSyncBar(`✓ Sync สำเร็จ`,'rgba(48,209,88,0.9)',2000);
       } else {
         showSyncBar('⚠ Sync ล้มเหลว','rgba(255,159,10,0.9)',2500);
       }
@@ -1184,15 +1210,19 @@ async function registerAllPlayers(){
   const gameDate=document.getElementById('game-date').value||new Date().toISOString().split('T')[0];
   const safeDateKey=gameDate.replace(/-/g,'');
 
-  // ── เช็คจำนวนคนในห้องก่อน Register ──
-  const existingNames=await getRoomPlayers(room,safeDateKey);
-  const myNames=players.map(p=>p.name);
-  const totalAfter=new Set([...existingNames,...myNames]).size;
-  if(totalAfter>ROOM_MAX){
-    const overCount=totalAfter-ROOM_MAX;
-    showSyncBar(`✋ ห้อง ${room} มีผู้เล่น ${existingNames.length}/${ROOM_MAX} คนแล้ว ไม่สามารถเพิ่มได้อีก ${overCount} คน`,'rgba(255,69,58,0.9)',4000);
+  showSyncBar('⟳ กำลังเช็คห้อง...','rgba(10,132,255,0.9)',0);
+
+  // ── เช็ค Room Config ก่อน ──
+  const config=await getRoomConfig(room,safeDateKey);
+  if(config&&config.dateKey===safeDateKey){
+    // ห้องนี้ถูกล็อคแล้ววันนี้
+    showSyncBar(`🔒 ห้อง ${room} ถูกใช้แล้ววันนี้ ไม่สามารถเพิ่มผู้เล่นใหม่ได้`,'rgba(255,69,58,0.9)',4000);
     return;
   }
+
+  // ── ห้องว่าง → ล็อคและ Register ──
+  const myNames=players.map(p=>p.name);
+  await lockRoom(room,safeDateKey,myNames);
 
   // Register ใน Firebase
   for(const pl of players){
@@ -1205,6 +1235,8 @@ async function registerAllPlayers(){
       });
     }catch(e){}
   }
+  showSyncBar(`🔒 ล็อคห้อง ${room} สำเร็จ · ${myNames.length} คน`,'rgba(48,209,88,0.9)',3000);
+
   // Register ใน Sheets ด้วย
   const url=getApiUrl();
   if(url&&url.startsWith('http')){
